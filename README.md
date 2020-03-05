@@ -7,7 +7,7 @@ Can be found on telegram as [SaitamaRobot](https://t.me/SaitamaRobot).
 
 The Support group can be reached out to at [One Punch Support](https://t.me/OnePunchSupport), where you can ask for help setting up your bot, discover/request new features, report bugs, and stay in the loop whenever a new update is available. 
 
-News channel as at [One Punch Updates](https://t.me/OnePunchUpdates) 
+There is no news channel as of yet, but if we do make one it will be listed here on this readme. 
 
 ## Setting up the bot (Read this before trying to use!):
 
@@ -178,24 +178,11 @@ Once you've setup your database and your configuration is complete, simply run t
 </details>
 
 
-
 You can use [nssm](https://nssm.cc/usage) to install the bot as service on windows and set it to restart on /gitpull 
 Make sure to edit the start and restart bats to your needs. 
 Note: the restart bat requires that User account control be disabled.
 
 For queries or any issues regarding the bot please open an issue ticket or visit us at [One Punch Support](https://t.me/OnePunchSupport)
-## How to setup on Heroku 
-For starters click on this button
-
-
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/AnimeKaizoku/SaitamaRobot.git)
-
-Fill in all the details , Deploy.
-Now go to https://dashboard.heroku.com/apps/(app-name)/resources ( Replace (app-name) with your app name )
-Turn on worker dyno (Don't worry It's free :D)
-Now send the bot /start , If it doesn't respond go to https://dashboard.heroku.com/apps/(app-name)/settings and remove webhook and port.  
-  
-
 ## Credits
 The bot is based of on the original work done by [PaulSonOfLars](https://github.com/PaulSonOfLars)
 This repo was just reamped to suit an Anime-centric community. All original credits go to Paul and his dedication, Without his efforts, this fork would not have been possible!

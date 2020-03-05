@@ -1,11 +1,9 @@
 import html
 import re
 
-from typing import List
-
-from telegram import Bot, Update, ParseMode
+from telegram import Update, ParseMode
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, MessageHandler, Filters, run_async
+from telegram.ext import CommandHandler, MessageHandler, CallbackContext, Filters, run_async
 
 import tg_bot.modules.sql.blacklist_sql as sql
 
@@ -20,7 +18,7 @@ BLACKLIST_GROUP = 11
 
 @run_async
 @connection_status
-def blacklist(bot: Bot, update: Update, args: List[str]):
+def blacklist(update: Update, context: CallbackContext):
 
     msg = update.effective_message
     chat = update.effective_chat
@@ -58,7 +56,7 @@ def blacklist(bot: Bot, update: Update, args: List[str]):
 @run_async
 @connection_status
 @user_admin
-def add_blacklist(bot: Bot, update: Update):
+def add_blacklist(update: Update, context: CallbackContext):
 
     msg = update.effective_message
     chat = update.effective_chat
@@ -67,7 +65,7 @@ def add_blacklist(bot: Bot, update: Update):
     if len(words) > 1:
         text = words[1]
         to_blacklist = list(set(trigger.strip() for trigger in text.split("\n") if trigger.strip()))
-        
+
         for trigger in to_blacklist:
             sql.add_to_blacklist(chat.id, trigger.lower())
 
@@ -86,7 +84,7 @@ def add_blacklist(bot: Bot, update: Update):
 @run_async
 @connection_status
 @user_admin
-def unblacklist(bot: Bot, update: Update):
+def unblacklist(update: Update, context: CallbackContext):
 
     msg = update.effective_message
     chat = update.effective_chat
@@ -96,7 +94,7 @@ def unblacklist(bot: Bot, update: Update):
         text = words[1]
         to_unblacklist = list(set(trigger.strip() for trigger in text.split("\n") if trigger.strip()))
         successful = 0
-
+        
         for trigger in to_unblacklist:
             success = sql.rm_from_blacklist(chat.id, trigger.lower())
             if success:
@@ -130,7 +128,7 @@ def unblacklist(bot: Bot, update: Update):
 @run_async
 @connection_status
 @user_not_admin
-def del_blacklist(bot: Bot, update: Update):
+def del_blacklist(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     message = update.effective_message
@@ -183,11 +181,12 @@ multiple triggers at once.
  - /rmblacklist <triggers>: Same as above.
 """
 
-BLACKLIST_HANDLER = DisableAbleCommandHandler("blacklist", blacklist, pass_args=True, admin_ok=True)
+BLACKLIST_HANDLER = DisableAbleCommandHandler("blacklist", blacklist, admin_ok=True)
 ADD_BLACKLIST_HANDLER = CommandHandler("addblacklist", add_blacklist)
 UNBLACKLIST_HANDLER = CommandHandler(["unblacklist", "rmblacklist"], unblacklist)
 BLACKLIST_DEL_HANDLER = MessageHandler(
-    (Filters.text | Filters.command | Filters.sticker | Filters.photo) & Filters.group, del_blacklist, edited_updates=True)
+    (Filters.text | Filters.command | Filters.sticker | Filters.photo) & Filters.group, del_blacklist)
+
 dispatcher.add_handler(BLACKLIST_HANDLER)
 dispatcher.add_handler(ADD_BLACKLIST_HANDLER)
 dispatcher.add_handler(UNBLACKLIST_HANDLER)

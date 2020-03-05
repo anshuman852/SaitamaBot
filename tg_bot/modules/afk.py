@@ -1,10 +1,10 @@
 import random
 
-from telegram import Bot, Update, MessageEntity
-from telegram.ext import MessageHandler, Filters, run_async
+from telegram import Update, MessageEntity
+from telegram.ext import MessageHandler, CallbackContext, Filters, run_async
 
 from tg_bot import dispatcher
-from tg_bot.modules.disable import DisableAbleCommandHandler, DisableAbleRegexHandler, DisableAbleMessageHandler
+from tg_bot.modules.disable import DisableAbleCommandHandler, DisableAbleMessageHandler
 from tg_bot.modules.sql import afk_sql as sql
 from tg_bot.modules.users import get_user_id
 
@@ -13,7 +13,7 @@ AFK_REPLY_GROUP = 8
 
 
 @run_async
-def afk(bot: Bot, update: Update):
+def afk(update: Update, context: CallbackContext):
 
     args = update.effective_message.text.split(None, 1)
     if len(args) >= 2:
@@ -26,8 +26,8 @@ def afk(bot: Bot, update: Update):
 
 
 @run_async
-def no_longer_afk(bot: Bot, update: Update):
-    
+def no_longer_afk(update: Update, context: CallbackContext):
+
     user = update.effective_user
 
     if not user:
@@ -44,12 +44,12 @@ def no_longer_afk(bot: Bot, update: Update):
                     '{} is finally here!',
                     'Welcome back!, {}',
                     'Where is {}?\nIn the chat!'
-                  ]
+                 ]
        chosen_option = random.choice(options)
        update.effective_message.reply_text(chosen_option.format(update.effective_user.first_name))
 
 @run_async
-def reply_afk(bot: Bot, update: Update):
+def reply_afk(update: Update, context: CallbackContext):
 
     message = update.effective_message
     entities = message.parse_entities([MessageEntity.TEXT_MENTION, MessageEntity.MENTION])
@@ -64,7 +64,7 @@ def reply_afk(bot: Bot, update: Update):
                 user_id = get_user_id(message.text[ent.offset:ent.offset + ent.length])
                 if not user_id:
                     return
-                chat = bot.get_chat(user_id)
+                chat = context.bot.get_chat(user_id)
                 fst_name = chat.first_name
 
             else:
@@ -84,14 +84,8 @@ def __gdpr__(user_id):
     sql.rm_afk(user_id)
 
 
-__help__ = """
- - /afk <reason>: mark yourself as AFK(away from keyboard).
- - brb <reason>: same as the afk command - but not a command.
-When marked as AFK, any mentions will be replied to with a message to say you're not available!
-"""
-
-AFK_HANDLER = DisableAbleCommandHandler("afk", afk)
-AFK_REGEX_HANDLER = DisableAbleRegexHandler(r"(?i)brb", afk, friendly="afk")
+AFK_HANDLER = DisableAbleCommandHandler("afk", afk, filters=Filters.group)
+AFK_REGEX_HANDLER = DisableAbleMessageHandler(Filters.regex(r"(?i)brb") & Filters.group, afk, friendly="afk")
 NO_AFK_HANDLER = DisableAbleMessageHandler(Filters.all & Filters.group, no_longer_afk, friendly="afk")
 AFK_REPLY_HANDLER = DisableAbleMessageHandler((Filters.entity(MessageEntity.MENTION) | Filters.entity(MessageEntity.TEXT_MENTION)) & Filters.group, reply_afk, friendly="afk")
 
@@ -99,6 +93,12 @@ dispatcher.add_handler(AFK_HANDLER, AFK_GROUP)
 dispatcher.add_handler(AFK_REGEX_HANDLER, AFK_GROUP)
 dispatcher.add_handler(NO_AFK_HANDLER, AFK_GROUP)
 dispatcher.add_handler(AFK_REPLY_HANDLER, AFK_REPLY_GROUP)
+
+__help__ = """
+ - /afk <reason>: mark yourself as AFK(away from keyboard).
+ - brb <reason>: same as the afk command - but not a command.
+When marked as AFK, any mentions will be replied to with a message to say you're not available!
+"""
 
 __mod_name__ = "AFK"
 __command_list__ = ["afk"]

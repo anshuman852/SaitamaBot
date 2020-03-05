@@ -41,7 +41,6 @@ from tg_bot.modules.helper_funcs.alternate import send_message
 
 # LOGGER.info("Original federation module by MrYacha, reworked by Mizukito Akito (@peaktogoo) on Telegram.")
 
-
 FBAN_ERRORS = {
 	"User is an administrator of the chat",
 	"Chat not found",
@@ -543,9 +542,8 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 
 	if fban:
 		fed_name = info['fname']
-		#https://t.me/OnePunchSupport/41606 // https://t.me/OnePunchSupport/41619
-		#starting = "The reason fban is replaced for {} in the Federation <b>{}</b>.".format(user_target, fed_name)
-		#send_message(update.effective_message, starting, parse_mode=ParseMode.HTML)
+		starting = "The reason fban is replaced for {} in the Federation <b>{}</b>.".format(user_target, fed_name)
+		send_message(update.effective_message, starting, parse_mode=ParseMode.HTML)
 
 		if reason == "":
 			reason = "No reason given."
@@ -587,7 +585,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 							 "\n<b>Reason:</b> {}".format(fed_name, mention_html(user.id, user.first_name), user_target, fban_user_id, reason), parse_mode="HTML")
 		for fedschat in fed_chats:
 			try:
-				# Do not spam all fed chats
+				# Do not spamming all fed chats
 				"""
 				bot.send_message(chat, "<b>FedBan reason updated</b>" \
 							 "\n<b>Federation:</b> {}" \
@@ -611,7 +609,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 					LOGGER.warning("Could not fban on {} because: {}".format(chat, excp.message))
 			except TelegramError:
 				pass
-		# Also do not spam all fed admins
+		# Also do not spamming all fed admins
 		"""
 		send_to_list(bot, FEDADMIN,
 				 "<b>FedBan reason updated</b>" \
@@ -646,7 +644,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 							LOGGER.warning("Unable to fban on {} because: {}".format(fedschat, excp.message))
 					except TelegramError:
 						pass
-		#send_message(update.effective_message, "Fedban Reason has been updated.")
+		send_message(update.effective_message, "Fedban Reason has been updated.")
 		return
 
 	fed_name = info['fname']
@@ -688,9 +686,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 							"\n<b>User:</b> {}" \
 							"\n<b>User ID:</b> <code>{}</code>" \
 							"\n<b>Reason:</b> {}".format(fed_name, mention_html(user.id, user.first_name), user_target, fban_user_id, reason), parse_mode="HTML")
-	chats_in_fed = 0
 	for fedschat in fed_chats:
-		chats_in_fed += 1
 		try:
 			# Do not spamming all fed chats
 			"""
@@ -747,10 +743,7 @@ def fed_ban(bot: Bot, update: Update, args: List[str]):
 							LOGGER.warning("Unable to fban on {} because: {}".format(fedschat, excp.message))
 					except TelegramError:
 						pass
-	if chats_in_fed == 0:
-		send_message(update.effective_message, "Fedban affected 0 chats. ")
-	elif chats_in_fed > 0:
-		send_message(update.effective_message, "Fedban affected {} chats. ".format(chats_in_fed))
+		send_message(update.effective_message, "Fedban Reason has been updated.")
 
 
 @run_async
@@ -846,9 +839,7 @@ def unfban(bot: Bot, update: Update, args: List[str]):
 						 "\n<b>Federation Admin:</b> {}" \
 						 "\n<b>User:</b> {}" \
 						 "\n<b>User ID:</b> <code>{}</code>".format(info['fname'], mention_html(user.id, user.first_name), user_target, fban_user_id), parse_mode="HTML")
-	unfbanned_in_chats = 0
 	for fedchats in chat_list:
-		unfbanned_in_chats += 1
 		try:
 			member = bot.get_chat_member(fedchats, user_id)
 			if member.status == 'kicked':
@@ -903,10 +894,7 @@ def unfban(bot: Bot, update: Update, args: List[str]):
 				except TelegramError:
 					pass
 
-	if unfbanned_in_chats == 0:
-		send_message(update.effective_message,"This person has been un-fbanned in 0 chats.")
-	if unfbanned_in_chats > 0:
-		send_message(update.effective_message,"This person has been un-fbanned in {} chats.".format(unfbanned_in_chats))
+	send_message(update.effective_message,"This person has been un-fbanned.")
 	# Also do not spamming all fed admins
 	"""
 	FEDADMIN = sql.all_fed_users(fed_id)

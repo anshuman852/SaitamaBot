@@ -29,7 +29,7 @@ def about_me(bot: Bot, update: Update, args: List[str]):
                                             parse_mode=ParseMode.MARKDOWN)
     elif message.reply_to_message:
         username = message.reply_to_message.from_user.first_name
-        update.effective_message.reply_text(f"{username} hasn't set an info message about themselves yet!")
+        update.effective_message.reply_text(username + " hasn't set an info message about themselves  yet!")
     else:
         update.effective_message.reply_text("You haven't set an info message about yourself yet!")
 
@@ -38,24 +38,15 @@ def about_me(bot: Bot, update: Update, args: List[str]):
 def set_about_me(bot: Bot, update: Update):
     message = update.effective_message  # type: Optional[Message]
     user_id = message.from_user.id
-    if message.reply_to_message:
-        repl_message = message.reply_to_message
-        repl_user_id = repl_message.from_user.id
-        if repl_user_id == bot.id and (user_id in SUDO_USERS or user_id in DEV_USERS):
-            user_id = repl_user_id
-    
     text = message.text
     info = text.split(None, 1)  # use python's maxsplit to only remove the cmd, hence keeping newlines.
     if len(info) == 2:
         if len(info[1]) < MAX_MESSAGE_LENGTH // 4:
             sql.set_user_me_info(user_id, info[1])
-            if user_id==bot.id:
-                message.reply_text("Updated my info!")
-            else:
-                message.reply_text("Updated your info!")
+            message.reply_text("Updated your info!")
         else:
             message.reply_text(
-                "The info needs to be under {} characters! You have {}.".format(MAX_MESSAGE_LENGTH // 4, len(info[1])))
+                "Your info needs to be under {} characters! You have {}.".format(MAX_MESSAGE_LENGTH // 4, len(info[1])))
 
 
 @run_async
@@ -75,7 +66,7 @@ def about_bio(bot: Bot, update: Update, args: List[str]):
                                             parse_mode=ParseMode.MARKDOWN)
     elif message.reply_to_message:
         username = user.first_name
-        update.effective_message.reply_text(f"{username} hasn't had a message set about themselves yet!")
+        update.effective_message.reply_text("{} hasn't had a message set about themselves yet!".format(username))
     else:
         update.effective_message.reply_text("You haven't had a bio set about yourself yet!")
 
@@ -83,14 +74,14 @@ def about_bio(bot: Bot, update: Update, args: List[str]):
 @run_async
 def set_about_bio(bot: Bot, update: Update):
     message = update.effective_message  # type: Optional[Message]
-    sender_id = update.effective_user.id
+    sender = update.effective_user  # type: Optional[User]
     if message.reply_to_message:
         repl_message = message.reply_to_message
         user_id = repl_message.from_user.id
         if user_id == message.from_user.id:
             message.reply_text("Ha, you can't set your own bio! You're at the mercy of others here...")
             return
-        elif user_id == bot.id and sender_id not in SUDO_USERS and sender_id not in DEV_USERS:
+        elif user_id == bot.id and sender.id not in SUDO_USERS and sender not in DEV_USERS:
             message.reply_text("Erm... yeah, I only trust sudo users or developers to set my bio.")
             return
 
@@ -112,11 +103,11 @@ def __user_info__(user_id):
     bio = html.escape(sql.get_user_bio(user_id) or "")
     me = html.escape(sql.get_user_me_info(user_id) or "")
     if bio and me:
-        return f"<b>About user:</b>\n{me}\n<b>What others say:</b>\n{bio}"
+        return "<b>About user:</b>\n{me}\n<b>What others say:</b>\n{bio}".format(me=me, bio=bio)
     elif bio:
-        return f"<b>What others say:</b>\n{bio}\n"
+        return "<b>What others say:</b>\n{bio}\n".format(me=me, bio=bio)
     elif me:
-        return f"<b>About user:</b>\n{me}"
+        return "<b>About user:</b>\n{me}""".format(me=me, bio=bio)
     else:
         return ""
 

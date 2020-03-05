@@ -1,10 +1,8 @@
 import html
 
-from typing import List
-
-from telegram import Bot, Update, ParseMode
+from telegram import Update
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, Filters, run_async
+from telegram.ext import CommandHandler, CallbackContext, Filters, run_async
 from telegram.utils.helpers import mention_html
 
 from tg_bot import dispatcher, LOGGER
@@ -12,14 +10,18 @@ from tg_bot.modules.disable import DisableAbleCommandHandler
 from tg_bot.modules.helper_funcs.chat_status import user_admin, can_delete
 from tg_bot.modules.log_channel import loggable
 
+
+
 @run_async
 @user_admin
 @loggable
-def purge(bot: Bot, update: Update, args: List[str]) -> str:
+def purge(update: Update, context: CallbackContext) -> str:
 
     msg = update.effective_message
     user = update.effective_user
     chat = update.effective_chat
+    bot = context.bot
+    args = context.args
 
     if can_delete(chat, bot.id):
 
@@ -83,7 +85,9 @@ def purge(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @user_admin
 @loggable
-def del_message(bot: Bot, update: Update) -> str:
+def del_message(update: Update, context: CallbackContext) -> str:
+
+    bot = context.bot
 
     if update.effective_message.reply_to_message:
         user = update.effective_user
@@ -111,7 +115,7 @@ __help__ = """
 """
 
 DELETE_HANDLER = DisableAbleCommandHandler("del", del_message, filters=Filters.group)
-PURGE_HANDLER = DisableAbleCommandHandler("purge", purge, filters=Filters.group, pass_args=True)
+PURGE_HANDLER = DisableAbleCommandHandler("purge", purge, filters=Filters.group)
 
 dispatcher.add_handler(DELETE_HANDLER)
 dispatcher.add_handler(PURGE_HANDLER)

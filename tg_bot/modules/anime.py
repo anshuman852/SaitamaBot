@@ -2,11 +2,9 @@ import requests
 import jikanpy
 import textwrap
 import datetime
-import html
-import bs4
 
-from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
-from telegram.ext import CallbackQueryHandler, run_async
+from telegram.ext import CallbackQueryHandler, CallbackContext, run_async
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, ParseMode
 
 from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, DEV_USERS
 from tg_bot.modules.disable import DisableAbleCommandHandler
@@ -14,11 +12,10 @@ from tg_bot.modules.disable import DisableAbleCommandHandler
 info_btn = "More Information"
 kaizoku_btn = "Kaizoku ☠️"
 kayo_btn = "Kayo 🏴‍☠️"
-prequel_btn = "⬅️ Prequel"
+prequel_btn = "Prequel ⬅️"
 sequel_btn = "Sequel ➡️"
 close_btn = "Close ❌"
 
- 
 def getKitsu(mal):
     # get kitsu id from mal id
     link = f'https://kitsu.io/api/edge/mappings?filter[external_site]=myanimelist/anime&filter[external_id]={mal}'
@@ -33,13 +30,12 @@ def getPosterLink(mal):
     image = requests.get(f'https://kitsu.io/api/edge/anime/{kitsu}').json()
     return(image['data']['attributes']['posterImage']['original'])
 
-def getBannerLink(mal, kitsu_search=True):
+def getBannerLink(mal):
     # try getting kitsu backdrop
-    if kitsu_search:
-        kitsu = getKitsu(mal)
-        image = f'http://media.kitsu.io/anime/cover_images/{kitsu}/original.jpg'
-        response = requests.get(image)
-        if response.status_code == 200: return(image)
+    kitsu = getKitsu(mal)
+    image = f'http://media.kitsu.io/anime/cover_images/{kitsu}/original.jpg'
+    response = requests.get(image)
+    if response.status_code == 200: return(image)
     # try getting anilist banner
     query = '''
     query ($idMal: Int){
@@ -148,7 +144,7 @@ def get_anime_manga(mal_id, search_type, user_id):
             sequel_id = related["Sequel"][0]["mal_id"]
         except IndexError:
             pass
-
+        
     if search_type == "anime_anime":
         kaizoku = f"https://animekaizoku.com/?s={result['title']}"
         kayo = f"https://animekayo.com/?s={result['title']}"
@@ -175,7 +171,7 @@ def get_anime_manga(mal_id, search_type, user_id):
     return caption, buttons, image
 
 @run_async
-def anime(bot: Bot, update: Update):
+def anime(update: Update, context: CallbackContext):
     
     message = update.effective_message
     args = message.text.strip().split(" ", 1)
@@ -195,16 +191,14 @@ def anime(bot: Bot, update: Update):
 
     search_result = jikan.search("anime", search_query)
     first_mal_id = search_result["results"][0]["mal_id"]
+
     caption, buttons, image = get_anime_manga(first_mal_id, "anime_anime", message.from_user.id)
-    try:
-        update.effective_message.reply_photo(photo=image, caption=caption, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=False)
-    except:
-        image = getBannerLink(first_mal_id, False)
-        update.effective_message.reply_photo(photo=image, caption=caption, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=False)
+
+    update.effective_message.reply_photo(photo=image, caption=caption, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=False)
     progress_message.delete()
 
 @run_async
-def manga(bot: Bot, update: Update):
+def manga(update: Update, context: CallbackContext):
 
     message = update.effective_message
     args = message.text.strip().split(" ", 1)
@@ -231,7 +225,7 @@ def manga(bot: Bot, update: Update):
     progress_message.delete()
 
 @run_async
-def character(bot: Bot, update: Update):
+def character(update: Update, context: CallbackContext):
 
     message = update.effective_message
     args = message.text.strip().split(" ", 1)
@@ -294,7 +288,7 @@ def character(bot: Bot, update: Update):
     progress_message.delete()
 
 @run_async
-def user(bot: Bot, update: Update):
+def user(update: Update, context: CallbackContext):
 
     message = update.effective_message
     args = message.text.strip().split(" ", 1)
@@ -364,14 +358,14 @@ def user(bot: Bot, update: Update):
 
     buttons = [
         [InlineKeyboardButton(info_btn, url=user['url'])],
-        [InlineKeyboardButton(close_btn, callback_data=f"anime_close, {message.from_user.id}")]
+        [InlineKeyboardButton(close_btn, callback_data=f"close, {message.from_user.id}")]
     ]
 
     update.effective_message.reply_photo(photo=img, caption=caption, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=False)
     progress_message.delete()
     
 @run_async
-def upcoming(bot: Bot, update: Update):
+def upcoming(update: Update, context: CallbackContext):
 
     jikan = jikanpy.jikan.Jikan()
     upcoming = jikan.top('anime', page=1, subtype="upcoming")
@@ -386,8 +380,9 @@ def upcoming(bot: Bot, update: Update):
         
     update.effective_message.reply_text(upcoming_message)
 
-def button(bot, update):
+def button(update: Update, context: CallbackContext):
 
+    bot = context.bot
     query = update.callback_query
     message = query.message
     data = query.data.split(", ")
@@ -396,7 +391,6 @@ def button(bot, update):
 
     user_and_admin_list = [original_user_id, OWNER_ID] + SUDO_USERS + DEV_USERS
     
-    bot.answer_callback_query(query.id)
     if query_type == "anime_close":
         if query.from_user.id in user_and_admin_list:
             message.delete()
@@ -413,76 +407,6 @@ def button(bot, update):
         else:
             query.answer("You are not allowed to use this.")
 
-
-def site_search(bot: Bot, update: Update, site: str):
-
-    message = update.effective_message
-    args = message.text.strip().split(" ", 1)
-    more_results = True
-
-    try:
-        search_query = args[1]
-    except IndexError:
-        message.reply_text("Give something to search")
-        return
-
-    if site == "kaizoku":
-        search_url = "https://animekaizoku.com/?s={}".format(search_query)
-        html_text = requests.get(search_url).text
-        soup = bs4.BeautifulSoup(html_text, "html.parser")
-        search_result = soup.find_all("h2", {'class':"post-title"})
-
-        if search_result:
-            result = "<b>Search results for</b> <code>{}</code> <b>on</b> <code>AnimeKaizoku</code>: \n".format(html.escape(search_query))
-            for entry in search_result:
-                post_link = entry.a['href']
-                post_name = html.escape(entry.text)
-                result += f"• <a href='{post_link}'>{post_name}</a>\n"
-        else:
-            more_results = False
-            result = "<b>No result found for</b> <code>{}</code> <b>on</b> <code>AnimeKaizoku</code>".format(html.escape(search_query))
-
-    elif site == "kayo":
-        search_url = "https://animekayo.com/?s={}".format(search_query)
-        html_text = requests.get(search_url).text
-        soup = bs4.BeautifulSoup(html_text, "html.parser")
-        search_result = soup.find_all("h2", {'class':"title"})
-
-        result = "<b>Search results for</b> <code>{}</code> <b>on</b> <code>AnimeKayo</code>: \n".format(html.escape(search_query))
-        for entry in search_result:
-            
-            if entry.text.strip() == "Nothing Found":
-                result = "<b>No result found for</b> <code>{}</code> <b>on</b> <code>AnimeKayo</code>".format(html.escape(search_query))
-                more_results = False
-                break
-
-            post_link = entry.a['href']
-            post_name = html.escape(entry.text.strip())
-            result += f"• <a href='{post_link}'>{post_name}</a>\n"
-
-    buttons = [
-        [InlineKeyboardButton("See all results", url=search_url)]
-    ]
-
-    if more_results:
-        message.reply_text(result, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(buttons), disable_web_page_preview=True)
-    else:
-        message.reply_text(result, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-
-
-
-@run_async
-def kaizoku(bot: Bot, update: Update):
-
-    site_search(bot, update, "kaizoku")
-
-
-@run_async
-def kayo(bot: Bot, update: Update):
-
-    site_search(bot, update, "kayo")
-
-
 __help__ = """
 Get information about anime, manga or characters from [MyAnimeList](https://myanimelist.net).
 
@@ -493,8 +417,6 @@ Get information about anime, manga or characters from [MyAnimeList](https://myan
  - /manga <manga>: returns information about the manga.
  - /user <user>: returns information about a MyAnimeList user.
  - /upcoming: returns a list of new anime in the upcoming seasons.
- - /kaizoku <anime>: search an anime on animekaizoku.com
- - /kayo <anime>: search an anime on animekayo.com
 
  """
 
@@ -503,8 +425,6 @@ CHARACTER_HANDLER = DisableAbleCommandHandler("character", character)
 MANGA_HANDLER = DisableAbleCommandHandler("manga", manga)
 USER_HANDLER = DisableAbleCommandHandler("user", user)
 UPCOMING_HANDLER = DisableAbleCommandHandler("upcoming", upcoming)
-KAIZOKU_SEARCH_HANDLER = DisableAbleCommandHandler("kaizoku", kaizoku)
-KAYO_SEARCH_HANDLER = DisableAbleCommandHandler("kayo", kayo)
 BUTTON_HANDLER = CallbackQueryHandler(button, pattern='anime_.*')
 
 dispatcher.add_handler(BUTTON_HANDLER)
@@ -512,10 +432,8 @@ dispatcher.add_handler(ANIME_HANDLER)
 dispatcher.add_handler(CHARACTER_HANDLER)
 dispatcher.add_handler(MANGA_HANDLER)
 dispatcher.add_handler(USER_HANDLER)
-dispatcher.add_handler(KAIZOKU_SEARCH_HANDLER)
-dispatcher.add_handler(KAYO_SEARCH_HANDLER)
 dispatcher.add_handler(UPCOMING_HANDLER)
 
 __mod_name__ = "MyAnimeList"
-__command_list__ = ["anime", "manga", "character", "user", "upcoming", "kaizoku", "kayo"]
-__handlers__ = [ANIME_HANDLER, CHARACTER_HANDLER, MANGA_HANDLER, USER_HANDLER, UPCOMING_HANDLER, KAIZOKU_SEARCH_HANDLER, KAYO_SEARCH_HANDLER, BUTTON_HANDLER]
+__command_list__ = ["anime", "manga", "character", "user", "upcoming"]
+__handlers__ = [ANIME_HANDLER, CHARACTER_HANDLER, MANGA_HANDLER, USER_HANDLER, UPCOMING_HANDLER, BUTTON_HANDLER]

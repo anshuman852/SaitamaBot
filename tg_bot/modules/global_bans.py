@@ -8,8 +8,7 @@ from telegram.ext import run_async, CommandHandler, MessageHandler, Filters
 from telegram.utils.helpers import mention_html
 
 import tg_bot.modules.sql.global_bans_sql as sql
-from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, DEV_USERS, SUPPORT_USERS, STRICT_GBAN, WHITELIST_USERS
-from tg_bot import GBAN_LOGS
+from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, DEV_USERS, SUPPORT_USERS, STRICT_GBAN, GBAN_LOGS, WHITELIST_USERS
 from tg_bot.modules.helper_funcs.chat_status import user_admin, is_user_admin
 from tg_bot.modules.helper_funcs.extraction import extract_user, extract_user_and_text
 from tg_bot.modules.helper_funcs.filters import CustomFilters
@@ -100,7 +99,7 @@ def gban(bot: Bot, update: Update, args: List[str]):
         return
 
     message.reply_text("On it!")
-    start_time = time.time()
+
     banner = update.effective_user  # type: Optional[User]
     messagerep = "{} is gbanning user {} "\
                  "because:\n{}".format(mention_html(banner.id, banner.first_name),
@@ -144,9 +143,7 @@ def gban(bot: Bot, update: Update, args: List[str]):
         bot.send_message(GBAN_LOGS, "gban complete! (User banned in {} chats)".format(gbanned_chats), parse_mode=ParseMode.HTML)
     else:
         send_to_list(bot, SUDO_USERS + SUPPORT_USERS, "gban complete! (User banned in {} chats)".format(gbanned_chats))
-    end_time = time.time()
-    gban_time = round((end_time - start_time), 3) / 60
-    message.reply_text("Done! This gban affected {} chats, Took {}sec".format(gbanned_chats, gban_time))
+    message.reply_text("Done! This gban affected {} chats".format(gbanned_chats))
     try:
         bot.send_message(user_id, "You have been globally banned from all groups where I have administrative permissions. If you think that this was a mistake, you may appeal your ban here: @onepunchsupport", parse_mode=ParseMode.HTML)
     except:
@@ -176,7 +173,7 @@ def ungban(bot: Bot, update: Update, args: List[str]):
     message.reply_text("I'll give {} a second chance, globally.".format(user_chat.first_name))
     messagerep = "{} has ungbanned user {}".format(mention_html(banner.id, banner.first_name),
                                                    mention_html(user_chat.id, user_chat.first_name))
-    start_time = time.time()
+
     if GBAN_LOGS:
         bot.send_message(GBAN_LOGS, messagerep, parse_mode=ParseMode.HTML)
     else:
@@ -215,9 +212,8 @@ def ungban(bot: Bot, update: Update, args: List[str]):
         bot.send_message(GBAN_LOGS, "un-gban complete!", parse_mode=ParseMode.HTML)
     else:
         send_to_list(bot, SUDO_USERS + SUPPORT_USERS, "un-gban complete!")
-    end_time = time.time()
-    ungban_time = round((end_time - start_time), 3) / 60
-    message.reply_text("Person has been un-gbanned.Took {}sec".format(ungban_time))
+
+    message.reply_text("Person has been un-gbanned.")
 
 @run_async
 def gbanlist(bot: Bot, update: Update):
@@ -238,6 +234,18 @@ def gbanlist(bot: Bot, update: Update):
         update.effective_message.reply_document(document=output, filename="gbanlist.txt",
                                                 caption="Here is the list of currently gbanned users.")
 
+@run_async
+def gbancleanup(bot: Bot, update: Update):
+    banned = sql.get_gban_list()
+
+    for user in banned:
+        user_id = user["user_id"]
+        time.sleep(0.1)
+        try:
+            bot.get_chat(user_id)
+        except BadRequest:
+            sql.ungban_user(user_id)
+    bot.sendMessage(update.effective_chat.id, "OwO! Done!")
 
 def check_and_ban(update, user_id, should_message=True):
     if sql.is_user_gbanned(user_id):
@@ -334,6 +342,8 @@ UNGBAN_HANDLER = CommandHandler("ungban", ungban, pass_args=True,
                                 filters=CustomFilters.sudo_filter | CustomFilters.support_filter | CustomFilters.dev_filter)
 GBAN_LIST = CommandHandler("gbanlist", gbanlist,
                            filters=CustomFilters.sudo_filter | CustomFilters.support_filter | CustomFilters.dev_filter)
+GBAN_CLEANUP = CommandHandler("gbancleanup", gbancleanup,
+                           filters=CustomFilters.sudo_filter | CustomFilters.support_filter | CustomFilters.dev_filter)
 
 GBAN_STATUS = CommandHandler("gbanstat", gbanstat, pass_args=True, filters=Filters.group)
 
@@ -342,6 +352,7 @@ GBAN_ENFORCER = MessageHandler(Filters.all & Filters.group, enforce_gban)
 dispatcher.add_handler(GBAN_HANDLER)
 dispatcher.add_handler(UNGBAN_HANDLER)
 dispatcher.add_handler(GBAN_LIST)
+dispatcher.add_handler(GBAN_CLEANUP)
 dispatcher.add_handler(GBAN_STATUS)
 
 if STRICT_GBAN:  # enforce GBANS if this is set

@@ -4,8 +4,8 @@ from typing import Optional
 
 from telegram import TelegramError, Chat, Message
 from telegram import Update, Bot
-from telegram.error import BadRequest, Unauthorized
-from telegram.ext import MessageHandler, Filters, CommandHandler
+from telegram.error import BadRequest
+from telegram.ext import MessageHandler, Filters, CommandHandler, CallbackContext
 from telegram.ext.dispatcher import run_async
 
 import tg_bot.modules.sql.users_sql as sql
@@ -67,7 +67,8 @@ def broadcast(bot: Bot, update: Update):
 
 
 @run_async
-def log_user(bot: Bot, update: Update):
+def log_user(update: Update, context: CallbackContext):
+    
     chat = update.effective_chat  # type: Optional[Chat]
     msg = update.effective_message  # type: Optional[Message]
 
@@ -121,7 +122,7 @@ __mod_name__ = "Users"
 
 BROADCAST_HANDLER = CommandHandler("broadcast", broadcast, filters=Filters.user(OWNER_ID) | CustomFilters.dev_filter)
 USER_HANDLER = MessageHandler(Filters.all & Filters.group, log_user)
-CHATLIST_HANDLER = CommandHandler("chatlist", chats, filters=CustomFilters.sudo_filter)
+CHATLIST_HANDLER = CommandHandler("chatlist", chats, filters=CustomFilters.sudo_filter | CustomFilters.dev_filter)
 
 dispatcher.add_handler(USER_HANDLER, USERS_GROUP)
 dispatcher.add_handler(BROADCAST_HANDLER)

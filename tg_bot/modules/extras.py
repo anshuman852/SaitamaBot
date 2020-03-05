@@ -1,29 +1,13 @@
-import random, re
+import random
+import re
+
 from random import randint
-from telegram import Message, Update, Bot, User
-from telegram import MessageEntity
-from telegram.ext import Filters, MessageHandler, run_async
+
+from telegram import Message, Update, Bot, User, MessageEntity
+from telegram.ext import MessageHandler, CallbackContext, Filters, run_async
 
 from tg_bot import dispatcher
 from tg_bot.modules.disable import DisableAbleCommandHandler
-
-ABUSE_STRINGS = (
-    "Fuck off",
-    "Stfu go fuck yourself",
-    "Ur mum gey",
-    "Ur dad lesbo",
-    "Bsdk",
-    "Nigga",
-    "Ur granny tranny",
-    "you noob",
-    "Relax your Rear,ders nothing to fear,The Rape train is finally here",
-    "Stfu bc",
-    "Stfu and Gtfo U nub",
-    "GTFO bsdk",
-    "CUnt",
-    " Gay is here",
-    "Ur dad gey bc ",
-)
 
 EYES = [
     ['⌐■', '■'],
@@ -203,56 +187,55 @@ TOSS = (
 )
 
 @run_async
-def roll(bot: Bot, update: Update):
+def roll(update: Update, context: CallbackContext):
     update.message.reply_text(random.choice(range(1, 7)))
 
-def toss(bot: Bot, update: Update):
+@run_async
+def toss(update: Update, context: CallbackContext):
     update.message.reply_text(random.choice(TOSS))
 
 @run_async
-def abuse(bot: Bot, update: Update):
-    # reply to correct message
+def shrug(update: Update, context: CallbackContext):
+    
     reply_text = update.effective_message.reply_to_message.reply_text if update.effective_message.reply_to_message else update.effective_message.reply_text
-    reply_text(random.choice(ABUSE_STRINGS))
+    reply_text("¯\\_(ツ)_/¯")
 
 @run_async
-def shrug(bot: Bot, update: Update):
-    # reply to correct message
+def bluetext(update: Update, context: CallbackContext):
+    
     reply_text = update.effective_message.reply_to_message.reply_text if update.effective_message.reply_to_message else update.effective_message.reply_text
-    reply_text("¯\_(ツ)_/¯")
+    reply_text("/BLUE /TEXT\n/MUST /CLICK\n/I /AM /A /STUPID /ANIMAL /THAT /IS /ATTRACTED /TO /COLORS")
 
 @run_async
-def bluetext(bot: Bot, update: Update):
-    # reply to correct message
-    reply_text = update.effective_message.reply_to_message.reply_text if update.effective_message.reply_to_message else update.effective_message.reply_text
-    reply_text("BLUE TEXT\n MUST CLICK\n I AM A STUPID ANIMAL THAT IS ATTRACTED TO COLORS")
-
-@run_async
-def rlg(bot: Bot, update: Update):
-    # reply to correct message
+def rlg(update: Update, context: CallbackContext):
+    
     eyes = random.choice(EYES)
     mouth = random.choice(MOUTHS)
     ears = random.choice(EARS)
-    repl = format(ears + eyes + mouth + eyes + ears)
+    
+    if len(eyes) == 2:
+        repl = ears[0] + eyes[0] + mouth[0] + eyes[1] + ears[1]
+    else:
+        repl = ears[0] + eyes[0] + mouth[0] + eyes[0] + ears[1]
     update.message.reply_text(repl)
 
-def decide(bot: Bot, update: Update):
-        r = randint(1, 100)
-        if r <= 65:
-            update.message.reply_text("Yes.")
-        elif r <= 90:
-            update.message.reply_text("NoU.")
-        else:
-            update.message.reply_text("Maybe.")
+@run_async
+def decide(update: Update, context: CallbackContext):
+    r = randint(1, 100)
+    if r <= 65:
+        update.message.reply_text("Yes.")
+    elif r <= 90:
+        update.message.reply_text("NoU.")
+    else:
+        update.message.reply_text("Maybe.")
 
-def table(bot: Bot, update: Update):
-            r = randint(1, 100)
-            if r <= 45:
-                update.message.reply_text("(╯°□°）╯彡 ┻━┻")
-            elif r <= 90:
-                update.message.reply_text("I ran out of tables, will order more.")
-            else:
-                update.message.reply_text("Go do some work instead of flippin tables.")
+@run_async
+def table(update: Update, context: CallbackContext):
+    r = randint(1, 100)
+    if r <= 50:
+        update.message.reply_text("(╯°□°）╯彡 ┻━┻")
+    else:
+        update.message.reply_text("Go do some work instead of flippin tables you helpless fagit.")
 
 __help__ = """
  - /shrug : get shrug XD.
@@ -260,28 +243,27 @@ __help__ = """
  - /decide : Randomly answers yes/no/maybe
  - /toss : Tosses A coin
  - /abuse : Abuses the cunt
- - /tts <any text> : Converts text to speech
  - /bluetext : check urself :V
  - /roll : Roll a dice.
  - /rlg : Join ears,nose,mouth and create an emo ;-;
- - /zal <any text> : zalgofy! your text
- Lyrics Plugin will take some moar time to come up.
 """
 
-__mod_name__ = "Extras"
-
-ROLL_HANDLER = DisableAbleCommandHandler("roll", roll)
-TOSS_HANDLER = DisableAbleCommandHandler("toss", toss)
 SHRUG_HANDLER = DisableAbleCommandHandler("shrug", shrug)
-BLUETEXT_HANDLER = DisableAbleCommandHandler("bluetext", bluetext)
-RLG_HANDLER = DisableAbleCommandHandler("rlg", rlg)
-DECIDE_HANDLER = DisableAbleCommandHandler("decide", decide)
 TABLE_HANDLER = DisableAbleCommandHandler("table", table)
+DECIDE_HANDLER = DisableAbleCommandHandler("decide", decide)
+TOSS_HANDLER = DisableAbleCommandHandler("toss", toss)
+BLUETEXT_HANDLER = DisableAbleCommandHandler("bluetext", bluetext)
+ROLL_HANDLER = DisableAbleCommandHandler("roll", roll)
+RLG_HANDLER = DisableAbleCommandHandler("rlg", rlg)
 
-dispatcher.add_handler(ROLL_HANDLER)
-dispatcher.add_handler(TOSS_HANDLER)
 dispatcher.add_handler(SHRUG_HANDLER)
-dispatcher.add_handler(BLUETEXT_HANDLER)
-dispatcher.add_handler(RLG_HANDLER)
-dispatcher.add_handler(DECIDE_HANDLER)
 dispatcher.add_handler(TABLE_HANDLER)
+dispatcher.add_handler(DECIDE_HANDLER)
+dispatcher.add_handler(TOSS_HANDLER)
+dispatcher.add_handler(BLUETEXT_HANDLER)
+dispatcher.add_handler(ROLL_HANDLER)
+dispatcher.add_handler(RLG_HANDLER)
+
+__mod_name__ = "Extras"
+__command_list__ = ["shrug", "table", "decide", "toss", "bluetext", "roll", "rlg"]
+__handlers__ = [SHRUG_HANDLER, TABLE_HANDLER, DECIDE_HANDLER, TOSS_HANDLER, BLUETEXT_HANDLER, ROLL_HANDLER, RLG_HANDLER]

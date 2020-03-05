@@ -1,9 +1,8 @@
 future
 emoji
-beautifulsoup4
 requests
 sqlalchemy
-python-telegram-bot==11.1.0
+python-telegram-bot>=10.1.0
 psycopg2-binary
 feedparser
 pynewtonmath
@@ -18,4 +17,3 @@ Pillow>=4.2.0
 CurrencyConverter
 #translator
 googletrans
-jikanpy

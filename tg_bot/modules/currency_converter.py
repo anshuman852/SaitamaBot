@@ -1,13 +1,13 @@
 import requests
 
-from telegram import Bot, Update
-from telegram.ext import CommandHandler, run_async
+from telegram import Update
+from telegram.ext import CommandHandler, CallbackContext, run_async
 
 from tg_bot import dispatcher, CASH_API_KEY
 
 
 @run_async
-def convert(bot: Bot, update: Update):
+def convert(update: Update, context: CallbackContext):
 
     args = update.effective_message.text.split(" ", 3)
     if len(args) > 1:

@@ -1,11 +1,9 @@
 import time
 import re
 
-from typing import List
-
-from telegram import Bot, Update, ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update, ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.error import BadRequest, Unauthorized
-from telegram.ext import CommandHandler, CallbackQueryHandler, Filters, run_async
+from telegram.ext import CommandHandler, CallbackQueryHandler, CallbackContext, Filters, run_async
 from telegram.utils.helpers import mention_html
 
 import tg_bot.modules.sql.connection_sql as sql
@@ -21,9 +19,10 @@ user_admin = chat_status.user_admin
 
 @user_admin
 @run_async
-def allow_connections(bot: Bot, update: Update, args: List[str]):
+def allow_connections(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
+    args = context.args
 
     if chat.type != chat.PRIVATE:
         if len(args) >= 1:
@@ -47,10 +46,11 @@ def allow_connections(bot: Bot, update: Update, args: List[str]):
 
 
 @run_async
-def connection_chat(bot: Bot, update: Update):
+def connection_chat(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     user = update.effective_user
+    bot = context.bot
 
     spam = spamfilters(update.effective_message.text, update.effective_message.from_user.id, update.effective_chat.id)
     if spam == True:
@@ -75,10 +75,12 @@ def connection_chat(bot: Bot, update: Update):
 
 
 @run_async
-def connect_chat(bot: Bot, update: Update, args: List[str]):
+def connect_chat(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     user = update.effective_user
+    args = context.args
+    bot = context.bot
 
     spam = spamfilters(update.effective_message.text, update.effective_message.from_user.id, update.effective_chat.id)
     if spam == True:
@@ -175,7 +177,7 @@ def connect_chat(bot: Bot, update: Update, args: List[str]):
             send_message(update.effective_message, "Connection to this chat is not allowed!")
 
 
-def disconnect_chat(bot: Bot, update: Update):
+def disconnect_chat(update: Update, context: CallbackContext):
 
     spam = spamfilters(update.effective_message.text, update.effective_message.from_user.id, update.effective_chat.id)
     if spam == True:
@@ -225,7 +227,7 @@ def connected(bot, update, chat, user_id, need_admin=True):
 
 
 @run_async
-def help_connect_chat(bot: Bot, update: Update):
+def help_connect_chat(update: Update, context: CallbackContext):
 
     spam = spamfilters(update.effective_message.text, update.effective_message.from_user.id, update.effective_chat.id)
     if spam == True:
@@ -239,11 +241,12 @@ def help_connect_chat(bot: Bot, update: Update):
 
 
 @run_async
-def connect_button(bot: Bot, update: Update):
+def connect_button(update: Update, context: CallbackContext):
 
     query = update.callback_query
     chat = update.effective_chat
     user = update.effective_user
+    bot = context.bot
 
     connect_match = re.match(r"connect\((.+?)\)", query.data)
     disconnect_match = query.data == "connect_disconnect"
@@ -281,7 +284,7 @@ def connect_button(bot: Bot, update: Update):
     elif connect_close:
         query.message.edit_text("Closed.\nTo open again, type /connect")
     else:
-        connect_chat(bot, update, [])
+        connect_chat(update, context)
 
 __help__ = """
  - /connect: connect a chat (Can be done in a group by /connect or /connect <chat id> in PM)
@@ -293,10 +296,10 @@ __help__ = """
  - /allowconnect <yes/no>: allow a user to connect to a chat
 """
 
-CONNECT_CHAT_HANDLER = CommandHandler("connect", connect_chat, pass_args=True)
+CONNECT_CHAT_HANDLER = CommandHandler("connect", connect_chat)
 CONNECTION_CHAT_HANDLER = CommandHandler("connection", connection_chat)
 DISCONNECT_CHAT_HANDLER = CommandHandler("disconnect", disconnect_chat)
-ALLOW_CONNECTIONS_HANDLER = CommandHandler("allowconnect", allow_connections, pass_args=True)
+ALLOW_CONNECTIONS_HANDLER = CommandHandler("allowconnect", allow_connections)
 HELP_CONNECT_CHAT_HANDLER = CommandHandler("helpconnect", help_connect_chat)
 CONNECT_BTN_HANDLER = CallbackQueryHandler(connect_button, pattern=r"connect")
 

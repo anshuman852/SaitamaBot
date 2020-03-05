@@ -6,10 +6,10 @@ from tg_bot.modules.helper_funcs.misc import is_module_loaded
 FILENAME = __name__.rsplit(".", 1)[-1]
 
 if is_module_loaded(FILENAME):
-    
+
     from telegram import Bot, Update, ParseMode, Message, Chat
     from telegram.error import BadRequest, Unauthorized
-    from telegram.ext import CommandHandler, run_async
+    from telegram.ext import CommandHandler, CallbackContext, run_async
     from telegram.utils.helpers import escape_markdown
 
     from tg_bot import dispatcher, LOGGER, GBAN_LOGS
@@ -19,9 +19,10 @@ if is_module_loaded(FILENAME):
 
     def loggable(func):
         @wraps(func)
-        def log_action(bot: Bot, update: Update, *args, **kwargs):
+        def log_action(update: Update, context: CallbackContext, *args, **kwargs):
 
-            result = func(bot, update, *args, **kwargs)
+            result = func(update, context, *args, **kwargs)
+            bot = context.bot
             chat = update.effective_chat
             message = update.effective_message
 
@@ -47,15 +48,17 @@ if is_module_loaded(FILENAME):
 
     def gloggable(func):
         @wraps(func)
-        def glog_action(bot: Bot, update: Update, *args, **kwargs):
+        def glog_action(update: Update, context: CallbackContext, *args, **kwargs):
 
-            result = func(bot, update, *args, **kwargs)
+            result = func(update, context, *args, **kwargs)
+            bot = context.bot
             chat = update.effective_chat
             message = update.effective_message
-
+            
             if result:
                 datetime_fmt = "%H:%M - %d-%m-%Y"
                 result += "\n<b>Event Stamp</b>: <code>{}</code>".format(datetime.utcnow().strftime(datetime_fmt))
+
                 
                 if message.chat.type == chat.SUPERGROUP and message.chat.username:
                     result += "\n<b>Link:</b> " \
@@ -92,10 +95,11 @@ if is_module_loaded(FILENAME):
 
     @run_async
     @user_admin
-    def logging(bot: Bot, update: Update):
+    def logging(update: Update, context: CallbackContext):
 
         message = update.effective_message
         chat = update.effective_chat
+        bot = context.bot
 
         log_channel = sql.get_chat_log_channel(chat.id)
         if log_channel:
@@ -111,10 +115,12 @@ if is_module_loaded(FILENAME):
 
     @run_async
     @user_admin
-    def setlog(bot: Bot, update: Update):
+    def setlog(update: Update, context: CallbackContext):
 
         message = update.effective_message
         chat = update.effective_chat
+        bot = context.bot
+
         if chat.type == chat.CHANNEL:
             message.reply_text("Now, forward the /setlog to the group you want to tie this channel to!")
 
@@ -149,10 +155,11 @@ if is_module_loaded(FILENAME):
 
     @run_async
     @user_admin
-    def unsetlog(bot: Bot, update: Update):
+    def unsetlog(update: Update, context: CallbackContext):
 
         message = update.effective_message
         chat = update.effective_chat
+        bot = context.bot
 
         log_channel = sql.stop_chat_logging(chat.id)
         if log_channel:
@@ -206,7 +213,7 @@ else:
     # run anyway if module not loaded
     def loggable(func):
         return func
-
+        
 
     def gloggable(func):
         return func

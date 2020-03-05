@@ -1,11 +1,10 @@
 import re
-import html
 
 import telegram
 from telegram import ParseMode, InlineKeyboardMarkup, Message, Chat
-from telegram import Bot, Update
+from telegram import Update
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, MessageHandler, DispatcherHandlerStop, run_async
+from telegram.ext import CommandHandler, MessageHandler, DispatcherHandlerStop, CallbackContext, run_async
 from telegram.utils.helpers import escape_markdown
 
 from tg_bot import dispatcher, LOGGER
@@ -22,7 +21,7 @@ HANDLER_GROUP = 10
 
 @run_async
 @connection_status
-def list_handlers(bot: Bot, update: Update):
+def list_handlers(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     all_handlers = sql.get_chat_triggers(chat.id)
@@ -42,25 +41,23 @@ def list_handlers(bot: Bot, update: Update):
             update.effective_message.reply_text(f"No filters are active in <b>{update_chat_title}</b>!", parse_mode=telegram.ParseMode.HTML)
         return
 
-    filter_list = ""
+    filter_list = BASIC_FILTER_STRING
     for keyword in all_handlers:
         entry = " - {}\n".format(escape_markdown(keyword))
-        if len(entry) + len(filter_list) + len(BASIC_FILTER_STRING) > telegram.MAX_MESSAGE_LENGTH:
-            filter_list = BASIC_FILTER_STRING + html.escape(filter_list)
+        if len(entry) + len(filter_list) > telegram.MAX_MESSAGE_LENGTH:
             update.effective_message.reply_text(filter_list, parse_mode=telegram.ParseMode.HTML)
             filter_list = entry
         else:
             filter_list += entry
 
     if not filter_list == BASIC_FILTER_STRING:
-        filter_list = BASIC_FILTER_STRING + html.escape(filter_list)
         update.effective_message.reply_text(filter_list, parse_mode=telegram.ParseMode.HTML)
 
 
 # NOT ASYNC BECAUSE DISPATCHER HANDLER RAISED
 @connection_status
 @user_admin
-def filters(bot: Bot, update: Update):
+def filters(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     msg = update.effective_message
@@ -136,7 +133,7 @@ def filters(bot: Bot, update: Update):
 # NOT ASYNC BECAUSE DISPATCHER HANDLER RAISED
 @connection_status
 @user_admin
-def stop_filter(bot: Bot, update: Update):
+def stop_filter(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     args = update.effective_message.text.split(None, 1)
@@ -160,8 +157,9 @@ def stop_filter(bot: Bot, update: Update):
 
 
 @run_async
-def reply_filter(bot: Bot, update: Update):
+def reply_filter(update: Update, context: CallbackContext):
 
+    bot = context.bot
     chat = update.effective_chat
     message = update.effective_message
     to_match = extract_text(message)

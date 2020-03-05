@@ -1,15 +1,15 @@
 from emoji import UNICODE_EMOJI
 from googletrans import Translator, LANGUAGES
 
-from telegram import Bot, Update, ParseMode
-from telegram.ext import run_async
+from telegram import Update, ParseMode
+from telegram.ext import CallbackContext, run_async
 
 from tg_bot import dispatcher
 from tg_bot.modules.disable import DisableAbleCommandHandler
 
 
 @run_async
-def totranslate(bot: Bot, update: Update):
+def totranslate(update: Update, context: CallbackContext):
 
     msg = update.effective_message
     problem_lang_code = []
@@ -18,17 +18,11 @@ def totranslate(bot: Bot, update: Update):
             problem_lang_code.append(key)
     try:
         if msg.reply_to_message and msg.reply_to_message.text:
-            
             args = update.effective_message.text.split(None, 1)
             text = msg.reply_to_message.text
             message = update.effective_message
             dest_lang = None
-
-            try:
-                source_lang = args[1].split(None, 1)[0]
-            except:
-                source_lang = "en"
-            
+            source_lang = args[1].split(None, 1)[0]
             if source_lang.count('-') == 2:
                 for lang in problem_lang_code:
                     if lang in source_lang:
@@ -42,25 +36,18 @@ def totranslate(bot: Bot, update: Update):
                 for lang in problem_lang_code:
                     if lang in source_lang:
                         dest_lang = source_lang
-                        source_lang = None
-                        break
                 if dest_lang == None:
                     dest_lang = source_lang.split("-")[1]
                     source_lang = source_lang.split("-")[0]
-            else:
-                dest_lang = source_lang
-                source_lang = None
-
             exclude_list = UNICODE_EMOJI.keys()
             for emoji in exclude_list:
                 if emoji in text:
                     text = text.replace(emoji, '')
-
             trl = Translator()
-            if source_lang == None:
+            if dest_lang == None:
                 detection = trl.detect(text)
-                tekstr = trl.translate(text, dest=dest_lang)
-                return message.reply_text("Translated from `{}` to `{}`:\n`{}`".format(detection.lang, dest_lang, tekstr.text), parse_mode=ParseMode.MARKDOWN)
+                tekstr = trl.translate(text, dest=source_lang)
+                return message.reply_text("Translated from `{}` to `{}`:\n`{}`".format(detection.lang, source_lang, tekstr.text), parse_mode=ParseMode.MARKDOWN)
             else:
                 tekstr = trl.translate(text, dest=dest_lang, src=source_lang)
                 message.reply_text("Translated from `{}` to `{}`:\n`{}`".format(source_lang, dest_lang, tekstr.text), parse_mode=ParseMode.MARKDOWN)

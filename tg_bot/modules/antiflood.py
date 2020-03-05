@@ -1,10 +1,8 @@
 import html
 
-from typing import List
-
-from telegram import Bot, Update, ParseMode
+from telegram import Update, ParseMode
 from telegram.error import BadRequest
-from telegram.ext import MessageHandler, CommandHandler, Filters, run_async
+from telegram.ext import MessageHandler, CommandHandler, CallbackContext, Filters, run_async
 from telegram.utils.helpers import mention_html
 
 from tg_bot import dispatcher, WHITELIST_USERS
@@ -17,7 +15,7 @@ FLOOD_GROUP = 3
 
 @run_async
 @loggable
-def check_flood(bot: Bot, update: Update) -> str:
+def check_flood(update: Update, context: CallbackContext) -> str:
 
     user = update.effective_user
     chat = update.effective_chat
@@ -40,10 +38,10 @@ def check_flood(bot: Bot, update: Update) -> str:
         chat.kick_member(user.id)
         msg.reply_text("*bans user*\nReason: Flood")
         log_message = "<b>{}:</b>" \
-               "\n#BANNED" \
-               "\n<b>User:</b> {}" \
-               "\nFlooded the group.".format(html.escape(chat.title),
-                                             mention_html(user.id, user.first_name))
+                      "\n#BANNED" \
+                      "\n<b>User:</b> {}" \
+                      "\nFlooded the group.".format(html.escape(chat.title),
+                                                    mention_html(user.id, user.first_name))
 
         return log_message
 
@@ -51,8 +49,8 @@ def check_flood(bot: Bot, update: Update) -> str:
         msg.reply_text("I can't kick people here, give me permissions first! Until then, I'll disable antiflood.")
         sql.set_flood(chat.id, 0)
         log_message = "<b>{}:</b>" \
-               "\n#INFO" \
-               "\nDon't have kick permissions, so automatically disabled antiflood.".format(chat.title)
+                      "\n#INFO" \
+                      "\nDon't have kick permissions, so automatically disabled antiflood.".format(chat.title)
 
         return log_message
 
@@ -62,11 +60,12 @@ def check_flood(bot: Bot, update: Update) -> str:
 @user_admin
 @can_restrict
 @loggable
-def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
+def set_flood(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     user = update.effective_user
     message = update.effective_message
+    args = context.args
     log_message = ""
 
     update_chat_title = chat.title
@@ -78,7 +77,7 @@ def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
         chat_name = f" in <b>{update_chat_title}</b>"
 
     if len(args) >= 1:
-
+        
         val = args[0].lower()
 
         if val == "off" or val == "no" or val == "0":
@@ -118,7 +117,7 @@ def set_flood(bot: Bot, update: Update, args: List[str]) -> str:
 
 @run_async
 @connection_status
-def flood(bot: Bot, update: Update):
+def flood(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     update_chat_title = chat.title
@@ -158,7 +157,7 @@ __help__ = """
 """
 
 FLOOD_BAN_HANDLER = MessageHandler(Filters.all & ~Filters.status_update & Filters.group, check_flood)
-SET_FLOOD_HANDLER = CommandHandler("setflood", set_flood, pass_args=True)
+SET_FLOOD_HANDLER = CommandHandler("setflood", set_flood)
 FLOOD_HANDLER = CommandHandler("flood", flood)
 
 dispatcher.add_handler(FLOOD_BAN_HANDLER, FLOOD_GROUP)

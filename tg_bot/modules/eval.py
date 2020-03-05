@@ -3,9 +3,8 @@ import sys
 
 from contextlib import contextmanager, redirect_stdout
 
-from telegram import Bot, Update, ParseMode
-from telegram.ext import Updater, CommandHandler, run_async
-
+from telegram import Update, ParseMode
+from telegram.ext import Updater, CommandHandler, CallbackContext, run_async
 from telegram.error import TimedOut, NetworkError
 
 from tg_bot import dispatcher, LOGGER
@@ -64,12 +63,14 @@ def send(msg, bot, update):
 
 @dev_plus
 @run_async
-def evaluate(bot, update):
+def evaluate(update: Update, context: CallbackContext):
+    bot = context.bot
     send(do(eval, bot, update), bot, update)
 
 @dev_plus
 @run_async
-def execute(bot, update):
+def execute(update: Update, context: CallbackContext):
+    bot = context.bot
     send(do(exec, bot, update), bot, update)
 
 def cleanup_code(code):

@@ -12,7 +12,7 @@ from telegram import Message, Chat, Update, Bot, MessageEntity
 from telegram import ParseMode
 from telegram.ext import CommandHandler, run_async, Filters
 from telegram.utils.helpers import escape_markdown, mention_html
-from tg_bot.modules.helper_funcs.chat_status import user_admin, sudo_plus, is_user_admin
+from tg_bot.modules.helper_funcs.chat_status import user_admin, sudo_plus
 from tg_bot import dispatcher, OWNER_ID, SUDO_USERS, SUPPORT_USERS, DEV_USERS, WHITELIST_USERS, BAN_STICKER
 from tg_bot.__main__ import STATS, USER_INFO, TOKEN
 from tg_bot.modules.disable import DisableAbleCommandHandler, DisableAbleRegexHandler
@@ -71,67 +71,99 @@ RUN_STRINGS = (
     "As The Doctor would say... RUN!",
 )
 
-SLAP_SAITAMA_TEMPLATES = (
-    "Slap me one more time and I'll mute you.",
-    "Stop slapping me. REEEEEEEEEEEEEE.",
-    [
-        "I am muting you for a minute.", #normal reply
-        "Stop slapping me just because I can't mute you. REEEEEEEEEE.", #reply to admin
-        "tmute" #command
-    ]
-)
-
 SLAP_TEMPLATES = (
     "{user2} was shot by {user1}.",
+    "{user2} was pricked to death.",
     "{user2} walked into a cactus while trying to escape {user1}.",
+    "{user2} drowned.",
     "{user2} drowned whilst trying to escape {user1}.",
+    "{user2} blew up.",
+    "{user2} was blown up by {user1}.",
+    "{user2} hit the ground too hard.",
+    "{user2} fell from a high place.",
+    "{user2} fell off a ladder.",
     "{user2} fell into a patch of cacti.",
+    "{user2} was doomed to fall by {user1}.",
+    "{user2} was blown from a high place by {user1}.",
+    "{user2} was squashed by a falling anvil.",
     "{user2} went up in flames.",
     "{user2} burned to death.",
     "{user2} was burnt to a crisp whilst fighting {user1}.",
+    "{user2} walked into a fire whilst fighting {user1}.",
+    "{user2} tried to swim in lava.",
+    "{user2} tried to swim in lava while trying to escape {user1}.",
     "{user2} was struck by lightning.",
     "{user2} was slain by {user1}.",
     "{user2} was killed by magic.",
+    "{user2} was killed by {user1} using magic.",
     "{user2} starved to death.",
+    "{user2} suffocated in a wall.",
     "{user2} fell out of the world.",
     "{user2} was knocked into the void by {user1}.",
+    "{user2} withered away.",
+    "{user2} was pummeled by {user1}.",
+    "{user2} was fragged by {user1}.",
+    "{user2} was desynchronized.",
+    "{user2} was wasted.",
+    "{user2} was busted.",
     "{user2}'s bones are scraped clean by the desolate wind.",
+    "{user2} has died of dysentery.",
     "{user2} fainted.",
     "{user2} is out of usable Pokemon! {user2} whited out!.",
     "{user2} is out of usable Pokemon! {user2} blacked out!.",
+    "{user2} whited out!.",
+    "{user2} blacked out!.",
     "{user2} says goodbye to this cruel world.",
     "{user2} got rekt.",
     "{user2} was sawn in half by {user1}.",
+    "{user2} died. I blame {user1}.",
+    "{user2} was axe-murdered by {user1}.",
     "{user2}'s melon was split by {user1}.",
     "{user2} was sliced and diced by {user1}.",
+    "{user2} was split from crotch to sternum by {user1}.",
     "{user2}'s death put another notch in {user1}'s axe.",
+    "{user2} died impossibly!",
     "{user2} died from {user1}'s mysterious tropical disease.",
+    "{user2} escaped infection by dying.",
     "{user2} played hot-potato with a grenade.",
     "{user2} was knifed by {user1}.",
+    "{user2} fell on his sword.",
     "{user2} ate a grenade.",
+    "{user2} practiced being {user1}'s clay pigeon.",
     "{user2} is what's for dinner!",
     "{user2} was terminated by {user1}.",
     "{user2} was shot before being thrown out of a plane.",
+    "{user2} was not invincible.",
     "{user2} has encountered an error.",
     "{user2} died and reincarnated as a goat.",
     "{user1} threw {user2} off a building.",
+    "{user2} is sleeping with the fishes.",
     "{user2} got a premature burial.",
     "{user1} spammed {user2}'s email.",
+    "{user1} made {user2} a knuckle sandwich.",
+    "{user1} slapped {user2} with pure nothing.",
     "{user1} hit {user2} with a small, interstellar spaceship.",
     "{user1} put {user2} in check-mate.",
     "{user1} RSA-encrypted {user2} and deleted the private key.",
     "{user1} put {user2} in the friendzone.",
     "{user1} slaps {user2} with a DMCA takedown request!",
+    "{user2} became a corpse blanket for {user1}.",
+    "Death is when the monsters get you. Death comes for {user2}.",
+    "Cowards die many times before their death. {user2} never tasted death but once.",
     "{user2} died of hospital gangrene.",
     "{user2} got a house call from Doctor {user1}.",
     "{user1} beheaded {user2}.",
     "{user2} got stoned...by an angry mob.",
     "{user1} sued the pants off {user2}.",
+    "{user2} was impeached.",
     "{user2} was one-hit KO'd by {user1}.",
     "{user1} sent {user2} down the memory hole.",
+    "{user2} was a mistake.",
     "{user2} was a mistake. - '{user1}' ",
     "{user1} checkmated {user2} in two moves.",
     "{user2} was made redundant.",
+    "{user2} was assimilated.",
+    "{user2} is with Harambe now.",
     "{user1} {hits} {user2} with a bat!.",
     "{user1} {hits} {user2} with a Taijutsu Kick!.",
     "{user1} {hits} {user2} with X-Gloves!.",    
@@ -146,13 +178,13 @@ SLAP_TEMPLATES = (
     "{user1} {hits} {user2} with a Carolina Smash!.",
     "{user1} {hits} {user2} with a King Kong Gun!.",
     "{user1} {hits} {user2} with a baseball bat - metal one.!.",
-    "*Serious punches {user2}*.",
-    "*Normal punches {user2}*.",
-    "*Consecutive Normal punches {user2}*.",
-    "*Two Handed Consecutive Normal Punches {user2}*.",
-    "*Ignores {user2} to let them die of embarassment*.",
-    "*points at {user2}* What's with this sassy... lost child?.",
-    "*Hits {user2} with a Fire Tornado*.",
+    "\*Serious punches {user2}\*.",
+    "\*Normal punches {user2}\*.",
+    "\*Consecutive Normal punches {user2}\*.",
+    "\*Two Handed Consecutive Normal Punches {user2}\*.",
+    "\*Ignores {user2} to let them die of embarassment\*.",
+    "\*points at {user2}\* What's with this sassy... lost child?.",
+    "\*Hits {user2} with a Fire Tornado\*.",
     "{user1} pokes {user2} in the eye !",
     "{user1} pokes {user2} on the sides!",        
     "{user1} pokes {user2}!",
@@ -161,12 +193,12 @@ SLAP_TEMPLATES = (
     "{user1} pokes {user2} with a stun gun!",
     "{user2} is secretly a Furry!.",
     "Hey Everybody! {user1} is asking me to be mean!",
-    "( ･_･)ﾉ⌒●~* (･.･;) <-{user2}",
-    "Take this {user2}\n(ﾉﾟДﾟ)ﾉ ))))●~* ",
+    "( ･_･)ﾉ⌒●~*  (･.･;) <--{user2}",
+    "Take this {user2}\n(ﾉﾟДﾟ)ﾉ ))))))●~* ",
     "Here {user2} hold this\n(｀・ω・)つ ●~＊",
     "( ・_・)ノΞ●~*  {user2},Shinaeeeee!!.",
-    "( ・∀・)ｒ鹵~<≪巛;ﾟДﾟ)ﾉ\n*Bug sprays {user2}*.",
-    "( ﾟДﾟ)ﾉ占~<巛巛巛.\n-{user2} You pest!",
+    "( ・∀・)ｒ鹵~<≪巛;ﾟДﾟ)ﾉ\n  \*Bug sprays {user2}\*.",
+    "( ﾟДﾟ)ﾉ占~<巛巛巛.  \n-{user2} You pest!",
     "( う-´)づ︻╦̵̵̿╤── \(˚☐˚”)/ {user2}.",
     "{user1} {hits} {user2} with a {item}.",
     "{user1} {hits} {user2} in the face with a {item}.",
@@ -179,45 +211,45 @@ SLAP_TEMPLATES = (
     "{user1} grabs up a {item} and {hits} {user2} with it.",
     "{user1} ties {user2} to a chair and {throws} a {item} at them.",
     "{user1} gave a friendly push to help {user2} learn to swim in lava.",
-    "{user1} bullied {user2}.",
-    "Nyaan ate {user2}'s leg. *nomnomnom*",
-    "{user1} {throws} a master ball at {user2}, resistance is futile.",
-    "{user1} hits {user2} with an action beam...bbbbbb (ง・ω・)ง ====*",
-    "{user1} ara ara's {user2}.",
-    "{user1} ora ora's {user2}.",
-    "{user1} muda muda's {user2}.",
-    "{user2} was turned into a Jojo reference!",  
-    "{user1} hits {user2} with {item}.",
+    "{user1} bullied {user2}."	
 )
 PING_STRING = (
     "PONG!!",
+    "Why did u wake me up? Want a punch?",
     "I am here!",
 )
 
 
 ITEMS = (
     "cast iron skillet",
-    "angry meow",
+    "large trout",
+    "baseball bat",
     "cricket bat",
     "wooden cane",
+    "nail",
+    "printer",
     "shovel",
+    "CRT monitor",
+    "physics textbook",
     "toaster",
+    "portrait of Richard Stallman",
+    "television",
+    "five ton truck",
+    "roll of duct tape",
     "book",
     "laptop",
+    "old television",
+    "sack of rocks",
+    "rainbow trout",
     "rubber chicken",
     "spiked bat",
+    "fire extinguisher",
     "heavy rock",
     "chunk of dirt",
+    "beehive",
+    "piece of rotten meat",
+    "bear",
     "ton of bricks",
-    "rasengan",
-    "spirit bomb",
-    "100-Type Guanyin Bodhisattva",
-    "rasenshuriken",
-    "Murasame",
-    "ban",
-    "chunchunmaru",
-    "Kubikiribōchō",
-    "rasengan",
     "spherical flying kat",
 )
 
@@ -263,47 +295,29 @@ def runs(bot: Bot, update: Update):
 @run_async
 def slap(bot: Bot, update: Update, args: List[str]):
     msg = update.effective_message  # type: Optional[Message]
-    chat = update.effective_chat
 
     # reply to correct message
     reply_text = msg.reply_to_message.reply_text if msg.reply_to_message else msg.reply_text
 
     # get user who sent message
     if msg.from_user.username:
-        curr_user = html.escape(msg.from_user.first_name)
+        curr_user = msg.from_user.first_name
     else:
-        curr_user = "{}".format(mention_html(msg.from_user.id, html.escape(msg.from_user.first_name)))
+        curr_user = "[{}](tg://user?id={})".format(msg.from_user.first_name, msg.from_user.id)
 
     user_id = extract_user(update.effective_message, args)
-
-    if user_id == bot.id:
-        temp = random.choice(SLAP_SAITAMA_TEMPLATES)
-        if type(temp) == list:
-            if temp[2] == "tmute":
-
-                if is_user_admin(chat, msg.from_user.id):
-                    reply_text(temp[1])
-                    return
-
-                mutetime = int(time.time() + 60)
-                bot.restrict_chat_member(chat.id, msg.from_user.id, until_date=mutetime, can_send_messages=False)
-                
-            reply_text(temp[0])
-        else:
-            reply_text(temp)
-        return
-
     if user_id:
         slapped_user = bot.get_chat(user_id)
         user1 = curr_user
         if slapped_user.username:
-            user2 = html.escape(slapped_user.first_name)
+            user2 = slapped_user.first_name
         else:
-            user2 = "{}".format(mention_html(slapped_user.id, html.escape(slapped_user.first_name)))
+            user2 = "[{}](tg://user?id={})".format(slapped_user.first_name,
+                                                   slapped_user.id)
 
     # if no target found, bot targets the sender
     else:
-        user1 = "{}".format(mention_html(bot.id, bot.first_name))
+        user1 = "[{}](tg://user?id={})".format(bot.first_name, bot.id)
         user2 = curr_user
 
     temp = random.choice(SLAP_TEMPLATES)
@@ -313,7 +327,7 @@ def slap(bot: Bot, update: Update, args: List[str]):
 
     repl = temp.format(user1=user1, user2=user2, item=item, hits=hit, throws=throw)
 
-    reply_text(repl, parse_mode=ParseMode.HTML)
+    reply_text(repl, parse_mode=ParseMode.MARKDOWN)
 
 
 @run_async
@@ -391,21 +405,22 @@ def info(bot: Bot, update: Update, args: List[str]):
     if user.id == OWNER_ID:
         text += "\n\nThe Disaster level of this person is 'God'."
         disaster_level_present = True
-    elif user.id in DEV_USERS:
-        text += "\nThis member is one of 'Hero Association'."
-        disaster_level_present = True
-    elif user.id in SUDO_USERS:
-        text += "\nThe Disaster level of this person is 'Dragon'."
-        disaster_level_present = True
-    elif user.id in SUPPORT_USERS:
-        text+= "\nThe Disaster level of this person is 'Demon'."
-        disaster_level_present = True
-    elif user.id in WHITELIST_USERS:
-        text += "\nThe Disaster level of this person is 'Wolf'."
-        disaster_level_present = True
+    else:
+        if user.id in DEV_USERS:
+            text += "\nThis member is one of 'Hero Association'."
+            disaster_level_present = True
+        if user.id in SUDO_USERS:
+            text += "\nThe Disaster level of this person is 'Dragon'."
+            disaster_level_present = True
+        if user.id in SUPPORT_USERS:
+            text+= "\nThe Disaster level of this person is 'Demon'."
+            disaster_level_present = True
+        if user.id in WHITELIST_USERS:
+            text += "\nThe Disaster level of this person is 'Wolf'."
+            disaster_level_present = True
 
     if disaster_level_present:
-        text += ' [<a href="https://t.me/OnePunchSupport/18340">?</a>]'
+        text += '[<a href="https://t.me/OnePunchSupport/18340">?</a>]'
     
     user_member = chat.get_member(user.id)
     if user_member.status == 'administrator':
@@ -470,6 +485,7 @@ def get_time(bot: Bot, update: Update, args: List[str]):
 
 @run_async
 @user_admin
+@sudo_plus
 def echo(bot: Bot, update: Update):
     args = update.effective_message.text.split(None, 1)
     message = update.effective_message
@@ -516,9 +532,7 @@ def markdown_help(bot: Bot, update: Update):
 
 @run_async
 def stats(bot: Bot, update: Update):
-    stats = "Current stats:\n" + "\n".join([mod.__stats__() for mod in STATS])
-    result = re.sub(r'(\d+)', r'<code>\1</code>', stats)
-    update.effective_message.reply_text(result, parse_mode=ParseMode.HTML)
+    update.effective_message.reply_text("Current stats:\n" + "\n".join([mod.__stats__() for mod in STATS]))
 
 
 # /ip is for private use

@@ -6,29 +6,30 @@ import json
 import sys
 import requests
 
-from typing import List
 from time import sleep
 
-from telegram import Bot, Update, ParseMode
+from telegram import Update
+from telegram import ParseMode
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, Filters, run_async
+from telegram.ext import CommandHandler, CallbackContext, Filters
+from telegram.ext.dispatcher import run_async
 from telegram.utils.helpers import escape_markdown, mention_html
 
-from tg_bot import dispatcher, WHITELIST_USERS, SUPPORT_USERS, SUDO_USERS, DEV_USERS, OWNER_ID, TOKEN
-from tg_bot.__main__ import IMPORTED, HELPABLE, MIGRATEABLE, STATS, USER_INFO, DATA_IMPORT, DATA_EXPORT, CHAT_SETTINGS, USER_SETTINGS 
+from tg_bot import dispatcher, SUDO_USERS, DEV_USERS, OWNER_ID, SUPPORT_USERS, WHITELIST_USERS, TOKEN
+from tg_bot.__main__ import IMPORTED, HELPABLE, MIGRATEABLE, STATS, USER_INFO, DATA_IMPORT, DATA_EXPORT, CHAT_SETTINGS, USER_SETTINGS
 from tg_bot.modules.disable import DisableAbleCommandHandler
 from tg_bot.modules.log_channel import loggable, gloggable
 from tg_bot.modules.helper_funcs.chat_status import bot_admin, can_promote, user_admin, can_pin, sudo_plus, dev_plus, connection_status
 from tg_bot.modules.helper_funcs.extraction import extract_user, extract_user_and_text
 
-
 @run_async
 @dev_plus
 @gloggable
-def addsudo(bot: Bot, update: Update, args: List[str]) -> str:
-    
+def addsudo(update: Update, context: CallbackContext) -> str:
+
     message = update.effective_message
-    user = update.effective_user    
+    user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     rt, log_message = "", ""
@@ -59,7 +60,7 @@ def addsudo(bot: Bot, update: Update, args: List[str]) -> str:
 
     with open('{}/tg_bot/elevated_users.json'.format(os.getcwd()), 'w') as outfile:
         json.dump(data, outfile, indent=4)
-
+        
     update.effective_message.reply_text(rt + "\nSuccessfully set Disaster level of {} to Dragon!".format(user_member.user.first_name))
     log_message += "<b>{}:</b> "\
                    "\n#SUDO "\
@@ -74,10 +75,11 @@ def addsudo(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @dev_plus
 @gloggable
-def removesudo(bot: Bot, update: Update, args: List[str]) -> str:
+def removesudo(update: Update, context: CallbackContext) -> str:
 
     message = update.effective_message
     user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     log_message = ""
@@ -88,7 +90,7 @@ def removesudo(bot: Bot, update: Update, args: List[str]) -> str:
 
     with open('{}/tg_bot/elevated_users.json'.format(os.getcwd()), 'r') as infile:
         data = json.load(infile)
-
+    
     if user_id in SUDO_USERS:
         message.reply_text("Demoting to normal user")
         SUDO_USERS.remove(user_id)
@@ -96,7 +98,7 @@ def removesudo(bot: Bot, update: Update, args: List[str]) -> str:
 
         with open('{}/tg_bot/elevated_users.json'.format(os.getcwd()), 'w') as outfile:
             json.dump(data, outfile, indent=4)
-
+        
         log_message += "<b>{}:</b>" \
                        "\n#UNSUDO" \
                        "\n<b>Admin:</b> {}" \
@@ -113,10 +115,11 @@ def removesudo(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @dev_plus
 @gloggable
-def addsupport(bot: Bot, update: Update, args: List[str]) -> str:
-
+def addsupport(update: Update, context: CallbackContext) -> str:
+    
     message = update.effective_message
     user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     rt, log_message = "", ""
@@ -147,9 +150,9 @@ def addsupport(bot: Bot, update: Update, args: List[str]) -> str:
 
     with open('{}/tg_bot/elevated_users.json'.format(os.getcwd()), 'w') as outfile:
         json.dump(data, outfile, indent=4)
-    
+
     update.effective_message.reply_text(rt + "\n{} was added as a Demon Disaster!".format(user_member.user.first_name))
-    
+
     log_message += "<b>{}:</b>" \
                    "\n#SUPPORT" \
                    "\n<b>Admin:</b> {}" \
@@ -163,10 +166,11 @@ def addsupport(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @dev_plus
 @gloggable
-def removesupport(bot: Bot, update: Update, args: List[str]) -> str:
-
+def removesupport(update: Update, context: CallbackContext) -> str:
+    
     message = update.effective_message
     user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     log_message = ""
@@ -202,10 +206,11 @@ def removesupport(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @dev_plus
 @gloggable
-def addwhitelist(bot: Bot, update: Update, args: List[str]) -> str:
-
+def addwhitelist(update: Update, context: CallbackContext) -> str:
+    
     message = update.effective_message
     user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     rt, log_message = "", ""
@@ -252,9 +257,11 @@ def addwhitelist(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @dev_plus
 @gloggable
-def removewhitelist(bot: Bot, update: Update, args: List[str]) -> str:
+def removewhitelist(update: Update, context: CallbackContext) -> str:
+    
     message = update.effective_message
     user = update.effective_user
+    args = context.args
     user_id = extract_user(message, args)
     user_member = update.effective_chat.get_member(user_id)
     log_message = ""
@@ -289,8 +296,8 @@ def removewhitelist(bot: Bot, update: Update, args: List[str]) -> str:
 
 @run_async
 @dev_plus
-def gitpull(bot: Bot, update: Update):
-
+def gitpull(update: Update, context: CallbackContext):
+    
     sent_msg = update.effective_message.reply_text("Pulling all changes from remote and then attempting to restart.")
     subprocess.Popen('git pull', stdout=subprocess.PIPE, shell=True)
 
@@ -308,7 +315,7 @@ def gitpull(bot: Bot, update: Update):
 
 @run_async
 @dev_plus
-def restart(bot: Bot, update: Update):
+def restart(update: Update, context: CallbackContext):
 
     update.effective_message.reply_text("Starting a new instance and shutting down this one")
 
@@ -318,7 +325,7 @@ def restart(bot: Bot, update: Update):
 
 @run_async
 @dev_plus
-def load(bot: Bot, update: Update):
+def load(update: Update, context: CallbackContext):
 
     message = update.effective_message
     text = message.text.split(" ", 1)[1]
@@ -351,7 +358,7 @@ def load(bot: Bot, update: Update):
         IMPORTED.pop(imported_module.__mod_name__.lower())
         load_messasge.edit_text("The module doesn't have a handler list specified!")
         return
-
+    
     if hasattr(imported_module, "__help__") and imported_module.__help__:
         HELPABLE[imported_module.__mod_name__.lower()] = imported_module
 
@@ -382,7 +389,7 @@ def load(bot: Bot, update: Update):
 
 @run_async
 @dev_plus
-def unload(bot: Bot, update: Update):
+def unload(update: Update, context: CallbackContext):
 
     message = update.effective_message
     text = message.text.split(" ", 1)[1]
@@ -449,7 +456,7 @@ def unload(bot: Bot, update: Update):
 @run_async
 @connection_status
 @sudo_plus
-def listmodules(bot: Bot, update: Update):
+def listmodules(update: Update, context: CallbackContext):
 
     message = update.effective_message
     module_list = []
@@ -470,11 +477,13 @@ def listmodules(bot: Bot, update: Update):
 @can_promote
 @user_admin
 @loggable
-def promote(bot: Bot, update: Update, args: List[str]) -> str:
-    
+def promote(update: Update, context: CallbackContext) -> str:
+
     message = update.effective_message
     chat = update.effective_chat
     user = update.effective_user
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id = extract_user(message, args)
@@ -515,7 +524,7 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
         else:
             message.reply_text("An error occured while promoting.")
             return log_message
-                         
+                    
     bot.sendMessage(chat.id, "Sucessfully promoted <b>{}</b>!".format(user_member.user.first_name or user_id), parse_mode=ParseMode.HTML)
     
     log_message += "<b>{}:</b>" \
@@ -534,11 +543,13 @@ def promote(bot: Bot, update: Update, args: List[str]) -> str:
 @can_promote
 @user_admin
 @loggable
-def demote(bot: Bot, update: Update, args: List[str]) -> str:
+def demote(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     message = update.effective_message
     user = update.effective_user
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id = extract_user(message, args)
@@ -573,7 +584,7 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
                               can_restrict_members=False,
                               can_pin_messages=False,
                               can_promote_members=False)
-
+                    
         bot.sendMessage(chat.id, "Sucessfully demoted <b>{}</b>!".format(user_member.user.first_name or user_id), parse_mode=ParseMode.HTML)
 
         log_message += "<b>{}:</b>" \
@@ -596,10 +607,12 @@ def demote(bot: Bot, update: Update, args: List[str]) -> str:
 @bot_admin
 @can_promote
 @user_admin
-def set_title(bot: Bot, update: Update, args: List[str]):
+def set_title(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     message = update.effective_message
+    args = context.args
+    bot = context.bot
 
     user_id, title = extract_user_and_text(message, args)
     try:
@@ -646,10 +659,12 @@ def set_title(bot: Bot, update: Update, args: List[str]):
 @can_pin
 @user_admin
 @loggable
-def pin(bot: Bot, update: Update, args: List[str]) -> str:
+def pin(update: Update, context: CallbackContext) -> str:
 
     user = update.effective_user
     chat = update.effective_chat
+    args = context.args
+    bot = context.bot
 
     is_group = chat.type != "private" and chat.type != "channel"
     prev_message = update.effective_message.reply_to_message
@@ -678,10 +693,11 @@ def pin(bot: Bot, update: Update, args: List[str]) -> str:
 @can_pin
 @user_admin
 @loggable
-def unpin(bot: Bot, update: Update) -> str:
+def unpin(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     user = update.effective_user
+    bot = context.bot
 
     try:
         bot.unpinChatMessage(chat.id)
@@ -697,13 +713,14 @@ def unpin(bot: Bot, update: Update) -> str:
                                        mention_html(user.id, user.first_name))
 
     return log_message
-
+    
 @run_async
 @bot_admin
 @user_admin
-def invite(bot: Bot, update: Update):
+def invite(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
+    bot = context.bot
 
     if chat.username:
         update.effective_message.reply_text(chat.username)
@@ -719,10 +736,11 @@ def invite(bot: Bot, update: Update):
 
 @run_async
 @connection_status
-def adminlist(bot: Bot, update: Update):
+def adminlist(update: Update, context: CallbackContext):
 
     chat = update.effective_chat
     user = update.effective_user
+    bot = context.bot
 
     chat_id = chat.id
     update_chat_title = chat.title
@@ -761,18 +779,21 @@ __help__ = """
  - /settitle: sets a custom title for an admin that the bot promoted
 """
 
+#Available for anyone
 ADMINLIST_HANDLER = DisableAbleCommandHandler(["adminlist","admins"], adminlist)
 
-PIN_HANDLER = CommandHandler("pin", pin, pass_args=True, filters=Filters.group)
+#Admins only
+PIN_HANDLER = CommandHandler("pin", pin, filters=Filters.group)
 UNPIN_HANDLER = CommandHandler("unpin", unpin, filters=Filters.group)
 
 INVITE_HANDLER = DisableAbleCommandHandler("invitelink", invite, filters=Filters.group)
 
-PROMOTE_HANDLER = CommandHandler("promote", promote, pass_args=True)
-DEMOTE_HANDLER = CommandHandler("demote", demote, pass_args=True)
+PROMOTE_HANDLER = CommandHandler("promote", promote)
+DEMOTE_HANDLER = CommandHandler("demote", demote)
 
-SET_TITLE_HANDLER = CommandHandler("settitle", set_title, pass_args=True)
+SET_TITLE_HANDLER = CommandHandler("settitle", set_title)
 
+#Devs only
 GITPULL_HANDLER = CommandHandler("gitpull", gitpull)
 RESTART_HANDLER = CommandHandler("restart", restart)
 
@@ -780,12 +801,12 @@ LOAD_HANDLER = CommandHandler("load", load)
 UNLOAD_HANDLER = CommandHandler("unload", unload)
 LISTMODULES_HANDLER = CommandHandler("listmodules", listmodules)
 
-SUDO_HANDLER = CommandHandler(("addsudo", "adddragon"), addsudo, pass_args=True)
-UNSUDO_HANDLER = CommandHandler(("removesudo", "removedragon"), removesudo, pass_args=True)
-SUPPORT_HANDLER = CommandHandler(("addsupport", "adddemon"), addsupport, pass_args=True)
-UNSUPPORT_HANDLER = CommandHandler(("removesupport", "removedemon"), removesupport, pass_args=True)
-WHITELIST_HANDLER = CommandHandler(("addwhitelist", "addwolf"), addwhitelist, pass_args=True)
-UNWHITELIST_HANDLER = CommandHandler(("removewhitelist", "removewolf"), removewhitelist, pass_args=True)
+SUDO_HANDLER = CommandHandler(("addsudo", "adddragon"), addsudo)
+UNSUDO_HANDLER = CommandHandler(("removesudo", "removedragon"), removesudo)
+SUPPORT_HANDLER = CommandHandler(("addsupport", "adddemon"), addsupport)
+UNSUPPORT_HANDLER = CommandHandler(("removesupport", "removedemon"), removesupport)
+WHITELIST_HANDLER = CommandHandler(("addwhitelist", "addwolf"), addwhitelist)
+UNWHITELIST_HANDLER = CommandHandler(("removewhitelist", "removewolf"), removewhitelist)
 
 dispatcher.add_handler(ADMINLIST_HANDLER)
 dispatcher.add_handler(PIN_HANDLER)

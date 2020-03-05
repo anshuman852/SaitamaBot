@@ -20,8 +20,6 @@ ENV = bool(os.environ.get('ENV', False))
 
 if ENV:
     TOKEN = os.environ.get('TOKEN', None)
-    GBAN_LOGS = os.environ.get('GBAN_LOGS', None)
-    CASH_API_KEY = os.environ.get('CASH_API_KEY', None)
     try:
         OWNER_ID = int(os.environ.get('OWNER_ID', None))
     except ValueError:
@@ -97,7 +95,7 @@ else:
         WHITELIST_USERS = set(int(x) for x in Config.WHITELIST_USERS or [])
     except ValueError:
         raise Exception("Your whitelisted users list does not contain valid integers.")
-    GBAN_LOGS = Config.GBAN_LOGS
+
     WEBHOOK = Config.WEBHOOK
     URL = Config.URL
     PORT = Config.PORT
@@ -118,11 +116,11 @@ else:
 SUDO_USERS.add(OWNER_ID)
 DEV_USERS.add(OWNER_ID)
 
-updater = tg.Updater(TOKEN, workers=WORKERS)
+updater = tg.Updater(TOKEN, workers=WORKERS, use_context=True)
 
 dispatcher = updater.dispatcher
 
-
+GBAN_LOGS = Config.GBAN_LOGS
 
 SUDO_USERS = list(SUDO_USERS) + list(DEV_USERS)
 DEV_USERS = list(DEV_USERS)

@@ -1,10 +1,8 @@
 import html
 
-from typing import List
-
-from telegram import Bot, Update, ParseMode
+from telegram import Update, ParseMode
 from telegram.error import BadRequest
-from telegram.ext import CommandHandler, Filters, run_async
+from telegram.ext import CommandHandler, CallbackContext, Filters, run_async
 from telegram.utils.helpers import mention_html
 
 from tg_bot import dispatcher, BAN_STICKER, LOGGER, DEV_USERS
@@ -21,11 +19,13 @@ from tg_bot.modules.log_channel import loggable
 @can_restrict
 @user_admin
 @loggable
-def ban(bot: Bot, update: Update, args: List[str]) -> str:
+def ban(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     user = update.effective_user
     message = update.effective_message
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id, reason = extract_user_and_text(message, args)
@@ -85,11 +85,13 @@ def ban(bot: Bot, update: Update, args: List[str]) -> str:
 @can_restrict
 @user_admin
 @loggable
-def temp_ban(bot: Bot, update: Update, args: List[str]) -> str:
+def temp_ban(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     user = update.effective_user
     message = update.effective_message
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id, reason = extract_user_and_text(message, args)
@@ -167,11 +169,13 @@ def temp_ban(bot: Bot, update: Update, args: List[str]) -> str:
 @can_restrict
 @user_admin
 @loggable
-def punch(bot: Bot, update: Update, args: List[str]) -> str:
+def punch(update: Update, context: CallbackContext) -> str:
 
     chat = update.effective_chat
     user = update.effective_user
     message = update.effective_message
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id, reason = extract_user_and_text(message, args)
@@ -221,7 +225,7 @@ def punch(bot: Bot, update: Update, args: List[str]) -> str:
 @run_async
 @bot_admin
 @can_restrict
-def punchme(bot: Bot, update: Update):
+def punchme(update: Update, context: CallbackContext):
 
     user_id = update.effective_message.from_user.id
     if is_user_admin(update.effective_chat, user_id):
@@ -241,11 +245,13 @@ def punchme(bot: Bot, update: Update):
 @can_restrict
 @user_admin
 @loggable
-def unban(bot: Bot, update: Update, args: List[str]) -> str:
+def unban(update: Update, context: CallbackContext) -> str:
 
     message = update.effective_message
     user = update.effective_user
     chat = update.effective_chat
+    args = context.args
+    bot = context.bot
     log_message = ""
 
     user_id, reason = extract_user_and_text(message, args)
@@ -296,10 +302,10 @@ __help__ = """
  - /punch <userhandle>: Punches a user out of the group, (via handle, or reply)
 """
 
-BAN_HANDLER = CommandHandler("ban", ban, pass_args=True)
-TEMPBAN_HANDLER = CommandHandler(["tban", "tempban"], temp_ban, pass_args=True)
-PUNCH_HANDLER = CommandHandler("punch", punch, pass_args=True)
-UNBAN_HANDLER = CommandHandler("unban", unban, pass_args=True)
+BAN_HANDLER = CommandHandler("ban", ban)
+TEMPBAN_HANDLER = CommandHandler(["tban", "tempban"], temp_ban)
+PUNCH_HANDLER = CommandHandler("punch", punch)
+UNBAN_HANDLER = CommandHandler("unban", unban)
 PUNCHME_HANDLER = DisableAbleCommandHandler("punchme", punchme, filters=Filters.group)
 
 dispatcher.add_handler(BAN_HANDLER)
